@@ -16,6 +16,7 @@ class Router {
 
   getRouteInfo() {
     let hash = window.location.hash || this.defaultRoute;
+    if (hash.startsWith('#validar-nota/')) hash = '#/' + hash.slice(1);
     if (!hash.startsWith('#/')) hash = '#/';
     
     // Suporte a parâmetros dinâmicos: #/validar-nota/:id
@@ -92,11 +93,12 @@ class Router {
         const roleLabel = user.role === 'ADMIN' ? 'Painel Admin' : 'Minhas Compras';
         userSlot.innerHTML = `
           <a href="${dest}" class="btn btn-primary btn-sm">
-            <span>👤</span> ${user.name.split(' ')[0]} (${roleLabel})
+            <span>👤</span> ${UI.escapeHTML(user.name.split(' ')[0])} (${roleLabel})
           </a>
           <button id="btn-global-logout" class="btn btn-secondary btn-sm" title="Sair da Conta">
             Sair
           </button>
+          <button id="btn-change-password" class="btn btn-secondary btn-sm">Alterar senha</button>
         `;
         document.getElementById('btn-global-logout')?.addEventListener('click', async () => {
           await API.logout();
@@ -104,6 +106,7 @@ class Router {
           window.location.hash = '#/';
           window.location.reload();
         });
+        document.getElementById('btn-change-password')?.addEventListener('click', () => UI.openModal('modal-password'));
       } else {
         userSlot.innerHTML = `
           <a href="#/login" class="btn btn-primary btn-sm">

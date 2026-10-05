@@ -1,0 +1,13 @@
+*.sqlite
+*.sqlite-*
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+.vercel/
+node_modules/
+dist/
+latyot/uploads/
+.private/
+latyot/server.py

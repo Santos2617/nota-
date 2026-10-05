@@ -7,9 +7,25 @@ let currentCompany = null;
 
 // Inicialização Global
 document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await API.init();
+  } catch (err) {
+    UI.showToast(err.message, 'error', 8000);
+  }
   await loadCompanyData();
   initRouter();
   initGlobalEventListeners();
+  window.appRouter.handleRoute();
+  const refresh = () => {
+    if (document.visibilityState !== 'visible' || document.querySelector('.modal-overlay.active') ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+    const route = window.location.hash;
+    if (['#/admin', '#/admin/notas', '#/admin/clientes', '#/admin/portfolio', '#/cliente', '#/portfolio'].includes(route)) {
+      window.appRouter.handleRoute();
+    }
+  };
+  window.addEventListener('focus', refresh);
+  document.addEventListener('visibilitychange', refresh);
 });
 
 // Carrega Dados Oficiais da Empresa
@@ -90,12 +106,12 @@ async function loadHomePortfolioPreview() {
     container.innerHTML = previewItems.map(item => `
       <div class="portfolio-card">
         <div class="portfolio-img-wrap">
-          <img src="${item.image_url}" alt="${item.title}" class="portfolio-img" loading="lazy" />
-          <span class="portfolio-category-tag">${item.category}</span>
+          <img src="${UI.escapeHTML(item.image_url)}" alt="${UI.escapeHTML(item.title)}" class="portfolio-img" loading="lazy" />
+          <span class="portfolio-category-tag">${UI.escapeHTML(item.category)}</span>
         </div>
         <div class="portfolio-content">
-          <h3>${item.title}</h3>
-          <p>${item.description}</p>
+          <h3>${UI.escapeHTML(item.title)}</h3>
+          <p>${UI.escapeHTML(item.description)}</p>
           <a href="#/portfolio" class="btn btn-gold-outline btn-sm">Ver Detalhes</a>
         </div>
       </div>
@@ -188,7 +204,7 @@ function renderValidationResult(data) {
 
   const itemsHtml = (data.itens || []).map(it => `
     <tr>
-      <td><strong>${it.descricao}</strong></td>
+      <td><strong>${UI.escapeHTML(it.descricao)}</strong></td>
       <td style="text-align: center;">${it.quantidade}</td>
       ${data.valor_total ? `<td style="text-align: right;">${UI.formatBRL(it.valor_unitario)}</td><td style="text-align: right; font-weight: bold;">${UI.formatBRL(it.valor_total)}</td>` : ''}
     </tr>
@@ -220,7 +236,7 @@ function renderValidationResult(data) {
             </div>
             <div class="note-meta-item">
               <label>Cliente</label>
-              <span>${data.cliente_mascarado}</span>
+              <span>${UI.escapeHTML(data.cliente_mascarado)}</span>
             </div>
             <div class="note-meta-item">
               <label>Código de Validação</label>
@@ -231,7 +247,7 @@ function renderValidationResult(data) {
           ${data.descricao ? `
             <div style="margin-bottom: 18px; padding: 12px; background: rgba(0,0,0,0.25); border-radius: 8px;">
               <label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 4px;">Resumo da Operação</label>
-              <p style="font-size: 0.92rem; color: var(--text-main);">${data.descricao}</p>
+              <p style="font-size: 0.92rem; color: var(--text-main);">${UI.escapeHTML(data.descricao)}</p>
             </div>
           ` : ''}
 
@@ -295,7 +311,7 @@ function renderValidationNotFound(code) {
         <div style="font-size: 3rem; margin-bottom: 14px;">🔍</div>
         <h3 style="margin-bottom: 8px;">Código não localizado</h3>
         <p style="color: var(--text-muted); max-width: 480px; margin: 0 auto 24px;">
-          Não foi possível localizar nenhuma nota de compra correspondente ao identificador "<strong>${code}</strong>" no banco de dados oficial da Fraga Sucatas.
+          Não foi possível localizar nenhuma nota de compra correspondente ao identificador "<strong>${UI.escapeHTML(code)}</strong>" no banco de dados oficial da Fraga Sucatas.
         </p>
         <button onclick="resetValidationForm()" class="btn btn-primary">
           Tentar Outro Código
@@ -355,12 +371,12 @@ function filterPortfolio(category) {
   container.innerHTML = filtered.map(item => `
     <div class="portfolio-card">
       <div class="portfolio-img-wrap">
-        <img src="${item.image_url}" alt="${item.title}" class="portfolio-img" loading="lazy" />
-        <span class="portfolio-category-tag">${item.category}</span>
+        <img src="${UI.escapeHTML(item.image_url)}" alt="${UI.escapeHTML(item.title)}" class="portfolio-img" loading="lazy" />
+        <span class="portfolio-category-tag">${UI.escapeHTML(item.category)}</span>
       </div>
       <div class="portfolio-content">
-        <h3>${item.title}</h3>
-        <p>${item.description}</p>
+        <h3>${UI.escapeHTML(item.title)}</h3>
+        <p>${UI.escapeHTML(item.description)}</p>
         <div style="margin-top: auto; display: flex; gap: 8px;">
           <a href="https://wa.me/55${(currentCompany?.whatsapp || '79996376501').replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Tenho interesse no item do portfólio: ${item.title}`)}" target="_blank" class="btn btn-primary btn-sm" style="flex: 1;">
             WhatsApp
@@ -410,7 +426,7 @@ async function renderCustomerView() {
       <tr>
         <td><strong class="gold-text">${n.numero_nota}</strong></td>
         <td>${n.data_compra}</td>
-        <td>${n.descricao}</td>
+        <td>${UI.escapeHTML(n.descricao)}</td>
         <td><strong>${UI.formatBRL(n.valor_total)}</strong></td>
         <td>
           <span class="validation-status-badge ${n.status === 'VALIDA' ? 'badge-valid' : 'badge-invalid'}" style="font-size: 0.72rem; padding: 4px 10px;">
@@ -462,7 +478,7 @@ async function renderAdminDashboard() {
       recTable.innerHTML = data.recent_notes.map(n => `
         <tr>
           <td><strong class="gold-text">${n.numero_nota}</strong></td>
-          <td>${n.cliente_nome || 'Consumidor'}</td>
+          <td>${UI.escapeHTML(n.cliente_nome || 'Consumidor')}</td>
           <td>${n.data_compra}</td>
           <td>${UI.formatBRL(n.valor_total)}</td>
           <td>
@@ -486,8 +502,8 @@ async function renderAdminDashboard() {
             <strong style="color: var(--gold-light);">${a.action}</strong>
             <span style="color: var(--text-dim); font-size: 0.75rem;">${UI.formatDateTime(a.created_at)}</span>
           </div>
-          <p style="color: var(--text-main); margin-bottom: 2px;">${a.details}</p>
-          <div style="font-size: 0.75rem; color: var(--text-dim);">Por: ${a.user_name} (${a.user_role}) • IP: ${a.ip_address}</div>
+          <p style="color: var(--text-main); margin-bottom: 2px;">${UI.escapeHTML(a.details)}</p>
+          <div style="font-size: 0.75rem; color: var(--text-dim);">Por: ${UI.escapeHTML(a.user_name)} (${a.user_role}) • IP: ${a.ip_address}</div>
         </div>
       `).join('');
     }
@@ -523,7 +539,7 @@ async function loadAdminNotesList() {
     tbody.innerHTML = notes.map(n => `
       <tr>
         <td><strong class="gold-text">${n.numero_nota}</strong></td>
-        <td>${n.cliente_nome || 'Consumidor'}</td>
+        <td>${UI.escapeHTML(n.cliente_nome || 'Consumidor')}</td>
         <td>${n.data_compra}</td>
         <td><strong>${UI.formatBRL(n.valor_total)}</strong></td>
         <td>
@@ -600,13 +616,13 @@ async function openNoteDetailModal(id) {
             </div>
             <div class="note-meta-item">
               <label>Cliente</label>
-              <span>${note.cliente_nome || 'Consumidor Final'} (${note.cliente_doc || ''})</span>
+              <span>${UI.escapeHTML(note.cliente_nome || 'Consumidor Final')} (${UI.escapeHTML(note.cliente_doc || '')})</span>
             </div>
           </div>
 
           <div style="margin: 16px 0;">
             <label style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; font-weight: bold;">Descrição Geral</label>
-            <p style="font-size: 0.95rem;">${note.descricao || '-'}</p>
+            <p style="font-size: 0.95rem;">${UI.escapeHTML(note.descricao || '-')}</p>
           </div>
 
           <table class="note-items-table">
@@ -621,7 +637,7 @@ async function openNoteDetailModal(id) {
             <tbody>
               ${(note.itens || []).map(it => `
                 <tr>
-                  <td>${it.descricao}</td>
+                  <td>${UI.escapeHTML(it.descricao)}</td>
                   <td style="text-align: center;">${it.quantidade}</td>
                   <td style="text-align: right;">${UI.formatBRL(it.valor_unitario)}</td>
                   <td style="text-align: right; font-weight: bold;">${UI.formatBRL(it.valor_total)}</td>
@@ -637,7 +653,7 @@ async function openNoteDetailModal(id) {
           ${note.observacoes ? `
             <div style="margin-top: 16px; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px;">
               <strong style="font-size: 0.78rem; color: var(--gold-light); text-transform: uppercase;">Observações Internas:</strong>
-              <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">${note.observacoes}</p>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">${UI.escapeHTML(note.observacoes)}</p>
             </div>
           ` : ''}
 
@@ -813,9 +829,9 @@ async function renderAdminPortfolio() {
     const items = await API.getAdminPortfolio();
     tbody.innerHTML = items.map(it => `
       <tr>
-        <td><img src="${it.image_url}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px;" /></td>
-        <td><strong>${it.title}</strong></td>
-        <td><span class="gold-badge" style="font-size: 0.72rem;">${it.category}</span></td>
+        <td><img src="${UI.escapeHTML(it.image_url)}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px;" /></td>
+        <td><strong>${UI.escapeHTML(it.title)}</strong></td>
+        <td><span class="gold-badge" style="font-size: 0.72rem;">${UI.escapeHTML(it.category)}</span></td>
         <td>${it.published ? '✓ Publicado' : '✕ Rascunho'}</td>
         <td>${it.display_order}</td>
         <td>
@@ -880,7 +896,7 @@ async function loadAdminCustomersList() {
       const msg = query
         ? `Nenhum cliente encontrado para a busca "${query}".`
         : 'Nenhum cliente cadastrado ainda. Clique em "➕ Novo Cliente" acima para cadastrar.';
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 28px; color: var(--text-muted);">${msg}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 28px; color: var(--text-muted);">${UI.escapeHTML(msg)}</td></tr>`;
       return;
     }
 
@@ -893,25 +909,25 @@ async function loadAdminCustomersList() {
       return `
         <tr>
           <td>
-            <div style="font-weight: 600; color: var(--gold-light); font-size: 0.95rem;">${c.nome}</div>
-            <div style="font-size: 0.75rem; color: var(--text-dim);">${c.endereco || 'Endereço não informado'}</div>
+            <div style="font-weight: 600; color: var(--gold-light); font-size: 0.95rem;">${UI.escapeHTML(c.nome)}</div>
+            <div style="font-size: 0.75rem; color: var(--text-dim);">${UI.escapeHTML(c.endereco || 'Endereço não informado')}</div>
           </td>
-          <td><span style="font-family: monospace; font-size: 0.85rem;">${c.cpf_cnpj || '-'}</span></td>
+          <td><span style="font-family: monospace; font-size: 0.85rem;">${UI.escapeHTML(c.cpf_cnpj || '-')}</span></td>
           <td>
             <div style="display: flex; align-items: center; gap: 6px;">
-              <span>${c.telefone || c.whatsapp || '-'}</span>
+              <span>${UI.escapeHTML(c.telefone || c.whatsapp || '-')}</span>
               ${whatsBtn}
             </div>
           </td>
-          <td><span style="font-size: 0.85rem;">${c.email || '-'}</span></td>
-          <td><span>${c.cidade || 'Umbaúba'} - ${c.estado || 'SE'}</span></td>
+          <td><span style="font-size: 0.85rem;">${UI.escapeHTML(c.email || '-')}</span></td>
+          <td><span>${UI.escapeHTML(c.cidade || 'Umbaúba')} - ${UI.escapeHTML(c.estado || 'SE')}</span></td>
           <td><span class="gold-badge" style="font-size: 0.78rem;">${c.total_notas || 0} notas</span></td>
           <td style="text-align: right;">
             <div style="display: flex; gap: 6px; justify-content: flex-end;">
               <button onclick="openCreateNoteForCustomer(${c.id})" class="btn btn-primary btn-sm" title="Emitir Nova Nota para este cliente" style="padding: 4px 10px; font-size: 0.8rem;">
                 🧾 Emitir Nota
               </button>
-              <button onclick="deleteCustomerConfirm(${c.id}, '${(c.nome || '').replace(/'/g, "\\'")}')" class="btn btn-danger btn-sm" title="Excluir cliente" style="padding: 4px 8px; font-size: 0.8rem;">
+              <button onclick="deleteCustomerConfirm(${c.id}, ${UI.escapeHTML(JSON.stringify(c.nome || ''))})" class="btn btn-danger btn-sm" title="Excluir cliente" style="padding: 4px 8px; font-size: 0.8rem;">
                 ✕
               </button>
             </div>
@@ -959,9 +975,9 @@ async function renderAdminUsers() {
     const users = await API.getUsers();
     tbody.innerHTML = users.map(u => `
       <tr>
-        <td><strong>${u.name}</strong></td>
-        <td>${u.username}</td>
-        <td>${u.email}</td>
+        <td><strong>${UI.escapeHTML(u.name)}</strong></td>
+        <td>${UI.escapeHTML(u.username)}</td>
+        <td>${UI.escapeHTML(u.email)}</td>
         <td><span class="gold-badge">${u.role}</span></td>
         <td>${UI.formatDateTime(u.created_at)}</td>
       </tr>
@@ -984,10 +1000,10 @@ async function renderAdminAudit() {
     tbody.innerHTML = logs.map(l => `
       <tr>
         <td style="font-family: monospace; font-size: 0.8rem;">${UI.formatDateTime(l.created_at)}</td>
-        <td><strong>${l.user_name}</strong> <span style="font-size: 0.72rem; color: var(--text-dim);">(${l.user_role})</span></td>
+        <td><strong>${UI.escapeHTML(l.user_name)}</strong> <span style="font-size: 0.72rem; color: var(--text-dim);">(${l.user_role})</span></td>
         <td><span class="gold-badge" style="font-size: 0.7rem;">${l.action}</span></td>
         <td>${l.target_type}: <strong>${l.target_id}</strong></td>
-        <td>${l.details}</td>
+        <td>${UI.escapeHTML(l.details)}</td>
         <td style="font-family: monospace; font-size: 0.8rem;">${l.ip_address}</td>
       </tr>
     `).join('');
@@ -1023,7 +1039,7 @@ window.printDoc = async function(publicId, publicCertificate = false) {
 
     const itemsRows = (note.itens || []).map(it => `
       <tr>
-        <td>${it.descricao}</td>
+        <td>${UI.escapeHTML(it.descricao)}</td>
         <td style="text-align: center;">${it.quantidade}</td>
         ${note.valor_total ? `<td style="text-align: right;">${UI.formatBRL(it.valor_unitario)}</td><td style="text-align: right; font-weight: bold;">${UI.formatBRL(it.valor_total)}</td>` : ''}
       </tr>
@@ -1058,7 +1074,7 @@ window.printDoc = async function(publicId, publicCertificate = false) {
               <p><strong>Endereço:</strong> <span data-print-customer="address"></span></p>
             `}
             <p><strong>Status Atual:</strong> <strong style="color: ${note.status === 'VALIDA' ? '#059669' : '#dc2626'};">${note.status}</strong></p>
-            <p><strong>Descrição:</strong> ${note.descricao || '-'}</p>
+            <p><strong>Descrição:</strong> ${UI.escapeHTML(note.descricao || '-')}</p>
           </div>
 
           <div class="print-qr-center">
@@ -1089,7 +1105,7 @@ window.printDoc = async function(publicId, publicCertificate = false) {
 
         ${note.observacoes ? `
           <div class="print-custom-obs">
-            <strong>Observações do Pedido:</strong> ${note.observacoes}
+            <strong>Observações do Pedido:</strong> ${UI.escapeHTML(note.observacoes)}
           </div>
         ` : ''}
 
@@ -1133,6 +1149,35 @@ window.printDoc = async function(publicId, publicCertificate = false) {
 // Inicialização de Formulários e Event Listeners Globais
 // -------------------------------------------------------------
 function initGlobalEventListeners() {
+  document.getElementById('form-password')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.target;
+    const button = form.querySelector('button[type="submit"]');
+    try {
+      if (form.elements.password.value !== form.elements.confirm_password.value) throw new Error('As senhas não coincidem.');
+      button.disabled = true;
+      await API.changePassword(form.elements.current_password.value, form.elements.password.value);
+      form.reset();
+      UI.closeModal('modal-password');
+      UI.showToast('Senha alterada. Use a nova senha nos outros aparelhos.', 'success');
+    } catch (err) { UI.showToast(err.message, 'error'); }
+    finally { button.disabled = false; }
+  });
+  document.getElementById('btn-import-browser')?.addEventListener('click', async () => {
+    try {
+      const data = API.getBrowserData();
+      if (!data.notes.length && !data.customers.length) {
+        UI.showToast('Não há cadastros antigos neste navegador.', 'info');
+        return;
+      }
+      if (!confirm(`Importar ${data.notes.length} notas e ${data.customers.length} clientes deste aparelho? Cadastros existentes serão preservados. Números de nota repetidos serão renumerados, mantendo os códigos QR.`)) return;
+      const result = await API.importBrowserData(data);
+      UI.showToast(`${result.notes} notas e ${result.customers} clientes importados. ${result.renumbered} notas renumeradas.`, 'success', 8000);
+      await loadAdminNotesList();
+    } catch (err) {
+      UI.showToast(err.message, 'error', 8000);
+    }
+  });
   // Tabs do Validador de Notas
   document.querySelectorAll('.validator-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1216,6 +1261,11 @@ function initGlobalEventListeners() {
 
     try {
       const res = await API.register(data);
+      if (res.confirmationRequired) {
+        UI.showToast('Confira seu e-mail para confirmar o cadastro e depois faça login.', 'success', 8000);
+        window.location.hash = '#/login';
+        return;
+      }
       UI.showToast(`Cadastro realizado com sucesso! Bem-vindo, ${res.user.name}.`, 'success');
       window.location.hash = '#/cliente';
     } catch (err) {
@@ -1389,7 +1439,7 @@ async function openCreateNoteModal() {
     try {
       const custs = await API.getCustomers();
       custSelect.innerHTML = custs.map(c => `
-        <option value="${c.id}">${c.nome} (${c.cpf_cnpj || 'Sem CPF/CNPJ'})</option>
+        <option value="${c.id}">${UI.escapeHTML(c.nome)} (${UI.escapeHTML(c.cpf_cnpj || 'Sem CPF/CNPJ')})</option>
       `).join('');
     } catch {
       custSelect.innerHTML = '<option value="">Erro ao carregar clientes</option>';
@@ -1500,7 +1550,7 @@ async function handleCreateCustomerSubmit(e) {
       try {
         const custs = await API.getCustomers();
         custSelect.innerHTML = custs.map(c => `
-          <option value="${c.id}">${c.nome} (${c.cpf_cnpj || 'Sem CPF/CNPJ'})</option>
+          <option value="${c.id}">${UI.escapeHTML(c.nome)} (${UI.escapeHTML(c.cpf_cnpj || 'Sem CPF/CNPJ')})</option>
         `).join('');
       } catch (e) {
         console.warn('Erro ao atualizar dropdown de clientes:', e);

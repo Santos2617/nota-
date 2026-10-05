@@ -1,103 +1,83 @@
-🧾 Sistema Gerador de Notas
+# Fraga Sucatas 2.0.0
 
-Sistema desenvolvido para facilitar o cadastro de clientes, registro de vendas, emissão e gerenciamento de notas, além de permitir o rastreamento das notas por meio de QR Code.
+Sistema de clientes, compras, notas e validacao por QR Code.
 
-📌 Sobre o projeto
+Site: https://fragasucatas.vercel.app/
 
-O sistema tem como objetivo centralizar e simplificar o processo de vendas e emissão de notas. Através dele, é possível cadastrar clientes, registrar suas compras, gerar uma nota referente à venda e disponibilizar um QR Code para facilitar a consulta e o rastreamento das informações da nota.
+## Dados compartilhados
 
-🚀 Funcionalidades
+Supabase Auth e PostgreSQL substituem o armazenamento isolado do navegador.
+Inclusoes, alteracoes e exclusoes sao salvas no banco central. As telas consultam
+o banco ao abrir e ao voltar para a janela. Uma falha de conexao nao e apresentada
+como uma gravacao bem-sucedida. Nao ha gravacao offline.
 
-👤 Cadastro de clientes
+Administradores gerenciam os registros. Clientes consultam apenas as proprias
+notas, com controle de acesso no banco (RLS). A impressao autenticada mostra nome,
+CPF/CNPJ e endereco completos. A consulta publica por QR Code nao retorna CPF
+ou endereco e mantem o nome mascarado.
 
-Nome
+Registros que existiam apenas no navegador podem ser enviados pelo administrador
+em **Notas > Importar dados deste aparelho**, no aparelho e navegador originais.
+A importacao preserva os QR Codes, evita duplicar notas ja importadas e informa
+quando precisa renumerar uma nota. Os dados locais nao sao apagados.
 
-CPF/CNPJ
+## Desenvolvimento
 
-Telefone
+Requisitos: Node.js 22+, pnpm e Python 3 para a visualizacao local.
 
-Endereço
+```sh
+cd latyot
+pnpm install --frozen-lockfile
+pnpm test
+pnpm build
+python -m http.server 8001 --bind 127.0.0.1 --directory dist
+```
 
-Demais informações necessárias
+Abrir http://127.0.0.1:8001/. O ambiente local usa o banco compartilhado real:
+nao use dados reais em testes destrutivos. O arquivo iniciar_sistema.bat abre
+diretamente o site publicado, sem iniciar o antigo banco SQLite.
 
-🛒 Cadastro de vendas
+## Publicacao
 
-Seleção do cliente
+O projeto Vercel usa a pasta raiz `latyot`, instala as dependencias do lockfile,
+executa `npm run build` e publica apenas `dist`. Atualizacoes em `main` no GitHub
+acionam a integracao de publicacao do Vercel.
 
-Produtos/serviços vendidos
+`assets/js/supabase-config.js` contem somente URL e chave publicavel. Chaves
+secretas nunca devem ser colocadas no frontend. A funcao `fraga-api` usa a chave
+de servico fornecida pelo ambiente do Supabase e verifica usuario e perfil nas
+operacoes administrativas. Login e validacao publica possuem tratamento proprio.
 
-Quantidades
+Para recriar o banco, aplicar nesta ordem:
 
-Valores
+1. `supabase/schema.sql`
+2. `supabase/import-browser.sql`
+3. `supabase/tighten-policies.sql`
+4. `supabase/legacy-auth-reservation.sql`
 
-Data da venda
+Publicar tambem `supabase/functions/fraga-api/index.ts`. A migracao das contas
+antigas ocorre no primeiro login, com verificacao da senha existente no servidor.
+Os registros legados privados nao fazem parte do repositorio.
 
-Forma de pagamento
+Configurar em Supabase Auth a URL do site e os redirecionamentos de confirmacao
+para `https://fragasucatas.vercel.app/`. Manter confirmacao de email habilitada.
+Administradores podem trocar a senha pelo botao **Alterar senha**.
 
-🧾 Geração de notas
+O verificador de seguranca informa que a protecao contra senhas vazadas esta
+desabilitada: esse recurso requer plano Pro, e o projeto permanece no gratuito.
+Referencia: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
-Criação da nota vinculada à venda e ao cliente
+Arquivos SQLite, uploads locais, senhas e arquivos de ambiente nao devem ser
+publicados. Backups locais antigos devem ser guardados em lugar privado. Senhas
+que ja apareceram em versoes anteriores do codigo precisam ser substituidas.
 
-Registro das informações da operação
+Cloudflare DNS exige um dominio proprio. O dominio `vercel.app` e administrado
+pelo Vercel e nao pode ser transferido para uma zona Cloudflare do usuario.
 
-Histórico de notas emitidas
+## Testes
 
-📱 QR Code
-
-Geração de um QR Code exclusivo para cada nota
-
-Leitura do QR Code para acessar as informações da nota
-
-Facilita a consulta e o rastreamento da venda
-
-🔎 Rastreamento de notas
-
-Consulta da nota através do código ou QR Code
-
-Visualização dos dados relacionados à venda
-
-Acompanhamento do status da nota
-
-🔄 Fluxo do sistema
-Cliente
-   ↓
-Cadastro do cliente
-   ↓
-Registro da venda
-   ↓
-Geração da nota
-   ↓
-Criação do QR Code
-   ↓
-Consulta/Rastreamento da nota
-
-🎯 Objetivo
-
-O projeto busca oferecer uma solução simples e organizada para gerenciar clientes, vendas e notas, tornando a consulta das informações mais rápida e prática através da utilização de QR Codes.
-
-🛠️ Tecnologias
-
-As tecnologias utilizadas no desenvolvimento podem incluir:
-
-Front-end: [Tecnologia utilizada]
-
-Back-end: [Tecnologia utilizada]
-
-Banco de dados: [Banco utilizado]
-
-QR Code: [Biblioteca utilizada]
-
-📂 Estrutura do projeto
-├── frontend/
-├── backend/
-├── database/
-├── components/
-├── services/
-└── README.md
-
-
-Observação: A estrutura acima pode variar de acordo com a arquitetura utilizada no projeto.
-
-📄 Licença
-
-Este projeto está sob a licença [informar licença].
+`pnpm test` executa os testes locais. `tests/cloud-check.cjs` testa sessoes
+independentes, permissoes, privacidade do QR, transacoes e exclusoes no banco real.
+Exige autorizacao e credenciais em `FRAGA_TEST_USERNAME` e `FRAGA_TEST_PASSWORD`.
+Cria dados temporarios; ao finalizar, informa IDs das contas de teste para a
+limpeza administrativa. Nunca gravar essas credenciais no repositorio.

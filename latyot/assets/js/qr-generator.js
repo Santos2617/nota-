@@ -7,7 +7,7 @@ const QR = {
   getValidationUrl(publicId) {
     const origin = window.location.origin;
     // URL amigável no formato SPA
-    return `${origin}/#validar-nota/${encodeURIComponent(publicId)}`;
+    return `${origin}/#/validar-nota/${encodeURIComponent(publicId)}`;
   },
 
   /**

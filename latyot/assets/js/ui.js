@@ -3,6 +3,9 @@
  */
 
 const UI = {
+  escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+  },
   // Toasts
   showToast(message, type = 'success', duration = 4000) {
     let container = document.getElementById('toast-container');
@@ -22,7 +25,7 @@ const UI = {
 
     toast.innerHTML = `
       <span style="font-size: 1.1rem; font-weight: bold;">${icon}</span>
-      <div style="flex: 1;">${message}</div>
+      <div style="flex: 1;">${this.escapeHTML(message)}</div>
     `;
 
     container.appendChild(toast);

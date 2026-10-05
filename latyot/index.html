@@ -636,6 +636,7 @@
               <button onclick="openCreateNoteModal()" class="btn btn-primary">
                 <span>➕</span> Emitir Nova Nota
               </button>
+              <button id="btn-import-browser" class="btn btn-secondary" type="button">Importar dados deste aparelho</button>
             </div>
           </div>
 
@@ -1232,14 +1233,30 @@
   </footer>
 
   <!-- Scripts -->
+  <div id="modal-password" class="modal-overlay">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3>Alterar senha</h3>
+        <button type="button" class="modal-close" onclick="UI.closeModal('modal-password')" aria-label="Fechar">&times;</button>
+      </div>
+      <form id="form-password" class="modal-body">
+        <div class="form-group"><label for="password-current">Senha atual</label><input id="password-current" name="current_password" type="password" class="form-control" autocomplete="current-password" required /></div>
+        <div class="form-group"><label for="password-new">Nova senha</label><input id="password-new" name="password" type="password" class="form-control" autocomplete="new-password" minlength="12" required /></div>
+        <div class="form-group"><label for="password-confirm">Confirmar nova senha</label><input id="password-confirm" name="confirm_password" type="password" class="form-control" autocomplete="new-password" minlength="12" required /></div>
+        <button type="submit" class="btn btn-primary">Salvar senha</button>
+      </form>
+    </div>
+  </div>
   <script src="/assets/vendor/qrcode.min.js?v=20261001_v6"></script>
   <script src="/assets/vendor/jsqr.min.js?v=20261001_v6"></script>
-  <script src="/assets/js/api.js?v=20261001_v6"></script>
-  <script src="/assets/js/ui.js?v=20261001_v6"></script>
-  <script src="/assets/js/qr-generator.js?v=20261001_v6"></script>
+  <script src="/assets/vendor/supabase.js?v=2.117.2"></script>
+  <script src="/assets/js/supabase-config.js?v=2.0.0"></script>
+  <script src="/assets/js/supabase-api.js?v=2.0.0"></script>
+  <script src="/assets/js/ui.js?v=2.0.0"></script>
+  <script src="/assets/js/qr-generator.js?v=2.0.0"></script>
   <script src="/assets/js/scanner.js?v=20261001_v6"></script>
-  <script src="/assets/js/router.js?v=20261001_v6"></script>
-  <script src="/assets/js/app.js?v=20261001_v6"></script>
+  <script src="/assets/js/router.js?v=2.0.0"></script>
+  <script src="/assets/js/app.js?v=2.0.0"></script>
 
   <!-- Container Oficial de Impressão -->
   <div id="print-area-container" class="print-area"></div>
