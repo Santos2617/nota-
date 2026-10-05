@@ -20,7 +20,10 @@ const API = {
           document.getElementById('print-area-container')?.replaceChildren();
           document.querySelectorAll('.app-view').forEach(view => { view.style.display = 'none'; });
           document.querySelectorAll('.modal-overlay.active').forEach(modal => modal.classList.remove('active'));
-          if (window.appRouter) window.appRouter.navigate('#/login');
+          if (window.appRouter) {
+            window.appRouter.navigate('#/login');
+            window.appRouter.handleRoute();
+          }
         }
       });
     })();
@@ -28,6 +31,10 @@ const API = {
   },
   check(error) {
     if (!error) return;
+    if (error.code === 'email_address_not_authorized' || /email address not authorized/i.test(error.message || '')) {
+      throw new Error('O cadastro por e-mail ainda não está disponível. Solicite sua conta ao administrador.');
+    }
+    if (error.code === 'over_email_send_rate_limit') throw new Error('O envio de e-mails está temporariamente limitado. Tente mais tarde ou fale com o administrador.');
     if (error.code === '23503') throw new Error('Este cadastro possui notas vinculadas e não pode ser excluído.');
     if (error.code === '23505') throw new Error('Já existe um cadastro com esses dados.');
     if (error.code === '42501') throw new Error('Você não tem permissão para esta operação.');

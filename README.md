@@ -63,6 +63,12 @@ Configurar em Supabase Auth a URL do site e os redirecionamentos de confirmacao
 para `https://fragasucatas.vercel.app/`. Manter confirmacao de email habilitada.
 Administradores podem trocar a senha pelo botao **Alterar senha**.
 
+Pendente: configurar um provedor SMTP para o cadastro publico por email. O envio
+padrao do Supabase so atende enderecos da equipe. Ate configurar o envio, criar
+novas contas em **Painel Admin > Usuarios**. As contas existentes e a sincronizacao
+nao dependem de SMTP. Nao desabilitar a confirmacao de email como alternativa.
+Referencia: https://supabase.com/docs/guides/auth/auth-smtp
+
 O verificador de seguranca informa que a protecao contra senhas vazadas esta
 desabilitada: esse recurso requer plano Pro, e o projeto permanece no gratuito.
 Referencia: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
